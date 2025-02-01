@@ -11,7 +11,8 @@ Future<void> main(List<String> arguments) async {
     zitiVersion();
 
     final fd = zitiSocket(1); // Example socket type
-
+    // Check the socket using Ziti_check_socket
+    print('Socket check result: ${checkSocket(fd)}');
     //Example of Ziti enroll
     final jwt =
         "C:/Users/steve/Git/flutter/dart_ffi_openziti/lib/test-dart.jwt";
@@ -26,16 +27,17 @@ Future<void> main(List<String> arguments) async {
     // final file = File('identity.json');
     //file.writeAsStringSync(enrolledIdentity);
 
-    //CONECTING
+    //CONNECTING
     final contextPtr = loadZitiContext(jsonString);
 
     if (contextPtr != nullptr) {
       print("Ziti context loaded successfully: ${contextPtr.address}");
 
       // Assuming you have a socket descriptor fd
-      final fd = 1; // Replace with actual socket descriptor
 
       zitiConnectWrapper(fd, contextPtr, "ziti-weather-service");
+      // Check the socket using Ziti_check_socket
+      print('Socket check result: ${checkSocket(fd)}');
     } else {
       print("Failed to load Ziti context.");
     }

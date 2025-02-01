@@ -63,10 +63,18 @@ final Ziti_load_context = dylib.lookupFunction<
     Pointer Function(Pointer<Utf8> identity),
     Pointer Function(Pointer<Utf8> identity)>('Ziti_load_context');
 
+// Create the Dart function
+final ZitiCheckSocketDart zitiCheckSocket = dylib
+    .lookupFunction<ZitiCheckSocketC, ZitiCheckSocketDart>('Ziti_check_socket');
+
 typedef ziti_connect_func = Int32 Function(Int32 socket, Pointer<Void> ztx,
     Pointer<Utf8> service, Pointer<Utf8> terminator);
 typedef ZitiConnect = int Function(int socket, Pointer<Void> ztx,
     Pointer<Utf8> service, Pointer<Utf8> terminator);
+
+// Define the Ziti_check_socket function signature
+typedef ZitiCheckSocketC = Int32 Function(Int32 socket);
+typedef ZitiCheckSocketDart = int Function(int socket);
 
 // final ZitiConnect zitiConnect =
 //     dylib.lookupFunction<ziti_connect_func, ZitiConnect>('Ziti_connect');
@@ -186,6 +194,12 @@ void zitiConnectWrapper(int fd, Pointer<NativeType> ztx, String service,
   } else {
     print("Ziti connection failed. Error code: $result");
   }
+}
+
+// Function to call Ziti_check_socket
+int checkSocket(int socket) {
+  final result = zitiCheckSocket(socket);
+  return result;
 }
 
 void shutdown() {
