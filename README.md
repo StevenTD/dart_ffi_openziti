@@ -10,7 +10,7 @@ This project demonstrates how to use the **OpenZiti SDK** in a Flutter applicati
 
 ## Status
 
-- Add bin file for other platform like [OpenZiti Python SDK](https://github.com/openziti/ziti-sdk-py/blob/main/src/openziti/zitilib.py) **Windows only**
+- Add bin file for other platform like [OpenZiti Python SDK](https://github.com/openziti/ziti-sdk-py/blob/main/src/openziti/zitilib.py)  **(Windows only for now)**
 - **Unusable**
 - Successfully **Enrolled with JWT**
 - Connect using **Identity**
