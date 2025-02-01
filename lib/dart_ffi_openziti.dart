@@ -10,6 +10,41 @@ final class Ver extends Struct {
   external Pointer<Utf8> revision;
 }
 
+// Define the required structures and functions from the Ziti C library
+final class AddrInfo extends Struct {
+  @Int32()
+  external int aiFlags;
+  @Int32()
+  external int aiFamily;
+  @Int32()
+  external int aiSockType;
+  @Int32()
+  external int aiProtocol;
+  @Int32()
+  external int aiAddrlen;
+  external Pointer aiP1;
+  external Pointer aiP2;
+  external Pointer aiNext;
+
+  // Method to get address and port
+  Pointer getAddr() {
+    final addrP = aiP2;
+    return addrP.cast();
+  }
+
+  // Method to get canonical name
+  String getCanonName() {
+    final p = aiP1;
+    return p.cast<Utf8>().toDartString();
+  }
+
+  // Static method to create AddrInfo from a memory address.
+  // Static method to create AddrInfo from a memory address.
+  static AddrInfo fromPointer(Pointer<AddrInfo> addrPointer) {
+    return addrPointer.ref;
+  }
+}
+
 // Define function bindings
 final ziti_lib_init =
     dylib.lookupFunction<Void Function(), void Function()>('Ziti_lib_init');
@@ -66,9 +101,18 @@ final Ziti_load_context = dylib.lookupFunction<
 late final ZitiConnectAddrDart ziti_connect_addr = dylib
     .lookupFunction<ZitiConnectAddrC, ZitiConnectAddrDart>('Ziti_connect_addr');
 
-// Create the Dart function
+final ZitiResolveDart _zitiResolve =
+    dylib.lookupFunction<ZitiResolveC, ZitiResolveDart>('Ziti_resolve');
+
+// Pointer to the Ziti resolve function
 final ZitiCheckSocketDart zitiCheckSocket = dylib
     .lookupFunction<ZitiCheckSocketC, ZitiCheckSocketDart>('Ziti_check_socket');
+typedef ZitiResolveC = Int32 Function(Pointer<Utf8> host, Pointer<Utf8> port,
+    Pointer<AddrInfo> hints, Pointer<Pointer<AddrInfo>> result);
+
+// Dart function signature
+typedef ZitiResolveDart = int Function(Pointer<Utf8> host, Pointer<Utf8> port,
+    Pointer<AddrInfo> hints, Pointer<Pointer<AddrInfo>> result);
 
 typedef ziti_connect_func = Int32 Function(Int32 socket, Pointer<Void> ztx,
     Pointer<Utf8> service, Pointer<Utf8> terminator);
@@ -87,7 +131,77 @@ typedef ZitiConnectAddrDart = int Function(
 // final ZitiConnect zitiConnect =
 //     dylib.lookupFunction<ziti_connect_func, ZitiConnect>('Ziti_connect');
 
+// Create the Dart function
 // Helper functions
+
+List<dynamic>? getAddrInfo(String host, String port,
+    {int family = 0, int type = 0, int proto = 0, int flags = 0}) {
+  final hostPtr = host.toNativeUtf8();
+  final portPtr = port.toNativeUtf8();
+  final hints = calloc<AddrInfo>();
+  // Access and set the fields using .ref
+  hints.ref.aiFamily = family;
+  hints.ref.aiSockType = type;
+  hints.ref.aiProtocol = proto;
+  final addrP = calloc<Pointer<AddrInfo>>(); // Allocate a pointer to AddrInfo
+
+  final resultCode = _zitiResolve(hostPtr, portPtr, hints, addrP);
+  if (resultCode != 0) {
+    calloc.free(addrP);
+    return null;
+  }
+
+  final result = <dynamic>[];
+  var addrPointer = addrP.cast<AddrInfo>();
+
+  while (addrPointer != nullptr) {
+    final addr = AddrInfo.fromPointer(addrPointer.cast<AddrInfo>());
+    final addrIn = addr.getAddr().cast<SockAddrIn>().ref;
+    final af = addr.aiFamily; // Can be mapped to Dart AddressFamily
+    final t = addr.aiSockType; // Can be mapped to Dart SocketKind
+
+    final address = {
+      'addressFamily': af,
+      'socketType': t,
+      'protocol': addr.aiProtocol,
+      'canonicalName': addr.getCanonName(),
+      'address': addrIn.ip().toString(),
+      'port': addrIn._port,
+    };
+    result.add(address);
+
+    // Correctly cast aiNext to Pointer<AddrInfo>
+    addrPointer = addr.aiNext.cast<AddrInfo>();
+  }
+
+  calloc.free(addrP);
+  return result;
+}
+
+base class SockAddrIn extends Struct {
+  @Int8()
+  external int _family; // Family (e.g., AF_INET)
+
+  @Int16()
+  external int _port; // Port
+
+  @Array(4)
+  external Array<Uint8> _addr; // IP address as an array of 4 bytes (IPv4)
+
+  String ip() {
+    // Convert _addr to a List<int> and join the IP address as a string
+    List<int> addrList = List<int>.generate(4, (index) => _addr[index]);
+    return addrList.join('.');
+  }
+
+  int get port {
+    return _port; // Return the port value (may need byte order conversion)
+  }
+
+  // Additional getter for family (if needed)
+  int get family => _family;
+}
+
 void checkError(int code) {
   if (code != 0) {
     final err = ziti_last_error();
