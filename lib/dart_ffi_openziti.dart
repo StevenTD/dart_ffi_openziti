@@ -63,6 +63,9 @@ final Ziti_load_context = dylib.lookupFunction<
     Pointer Function(Pointer<Utf8> identity),
     Pointer Function(Pointer<Utf8> identity)>('Ziti_load_context');
 
+late final ZitiConnectAddrDart ziti_connect_addr = dylib
+    .lookupFunction<ZitiConnectAddrC, ZitiConnectAddrDart>('Ziti_connect_addr');
+
 // Create the Dart function
 final ZitiCheckSocketDart zitiCheckSocket = dylib
     .lookupFunction<ZitiCheckSocketC, ZitiCheckSocketDart>('Ziti_check_socket');
@@ -75,6 +78,11 @@ typedef ZitiConnect = int Function(int socket, Pointer<Void> ztx,
 // Define the Ziti_check_socket function signature
 typedef ZitiCheckSocketC = Int32 Function(Int32 socket);
 typedef ZitiCheckSocketDart = int Function(int socket);
+
+typedef ZitiConnectAddrC = Int32 Function(
+    Pointer<Void> socket, Pointer<Utf8> host, Uint32 port);
+typedef ZitiConnectAddrDart = int Function(
+    Pointer<Void> socket, Pointer<Utf8> host, int port);
 
 // final ZitiConnect zitiConnect =
 //     dylib.lookupFunction<ziti_connect_func, ZitiConnect>('Ziti_connect');
@@ -194,6 +202,18 @@ void zitiConnectWrapper(int fd, Pointer<NativeType> ztx, String service,
   } else {
     print("Ziti connection failed. Error code: $result");
   }
+}
+
+void connectToZitiAddr(Pointer<Void> socket, String host, int port) {
+  final hostPtr = host.toNativeUtf8();
+  print('Connecting to Ziti service at $host:$port');
+  final result = ziti_connect_addr(socket, hostPtr, port);
+  malloc.free(hostPtr);
+
+  // Check for errors
+  checkError(result);
+
+  print('Successfully connected to Ziti service.');
 }
 
 // Function to call Ziti_check_socket
