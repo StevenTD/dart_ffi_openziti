@@ -1,8 +1,29 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'package:dart_ffi_openziti/dart_ffi_openziti.dart';
+import 'package:http/http.dart' as http;
 
 Future<void> main(List<String> arguments) async {
+// Function to make an HTTP request using Ziti connection
+  Future<void> makeHttpRequest(String url) async {
+    // Define custom headers
+    Map<String, String> headers = {
+      'Host': 'wttr.in',
+    };
+
+    // Make HTTP GET request with headers
+    final response = await http.get(
+      Uri.parse(url),
+      headers: headers, // Add custom headers here
+    );
+
+    if (response.statusCode == 200) {
+      print('Success: ${response.body}');
+    } else {
+      print('Failed to get data: ${response.statusCode}');
+    }
+  }
+
   try {
     //dart_ffi_openziti.main();
     // print('Hello world: ${dart_ffi_openziti.main()}!');
@@ -38,6 +59,10 @@ Future<void> main(List<String> arguments) async {
       zitiConnectWrapper(fd, contextPtr, "ziti-weather-service");
       // Check the socket using Ziti_check_socket
       print('Socket check result: ${checkSocket(fd)}');
+      // Make HTTP request over Ziti
+      String url =
+          "http://wttr.ziti/Rochester?format=3"; // Replace with your URL
+      await makeHttpRequest(url);
     } else {
       print("Failed to load Ziti context.");
     }
