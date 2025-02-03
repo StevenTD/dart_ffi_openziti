@@ -4,6 +4,7 @@ import 'package:dart_ffi_openziti/dart_ffi_openziti.dart';
 import 'package:dart_ffi_openziti/dart_ffi_openziti_platform_interface.dart';
 import 'package:dart_ffi_openziti/dart_ffi_openziti_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:http/http.dart' as http;
 
 class MockDartFfiOpenzitiPlatform
     with MockPlatformInterfaceMixin
@@ -89,5 +90,25 @@ void main() {
         socket, contextPtr, "ziti-weather-service");
     dartFfiOpenzitiPlugin.shutdown();
     expect(result, 0);
+  });
+
+  test('makeHttpGet', () async {
+    DartFfiOpenziti dartFfiOpenzitiPlugin = DartFfiOpenziti();
+    dartFfiOpenzitiPlugin.ziti_lib_init();
+    dartFfiOpenzitiPlugin.zitiVersion();
+    final socket = dartFfiOpenzitiPlugin.zitiSocket(1);
+    print('Socket: $socket');
+    String jsonString =
+        await File('C:/Users/steve/Git/flutter/dart_ffi_openziti/identity.json')
+            .readAsString();
+    final contextPtr = dartFfiOpenzitiPlugin.loadZitiContext(jsonString);
+    print('Context: ${contextPtr.address}');
+    final result = dartFfiOpenzitiPlugin.zitiConnectWrapper(
+        socket, contextPtr, "ziti-weather-service");
+
+    final response =
+        await http.get(Uri.parse('http://wttr.ziti/Rochester?format=3'));
+    dartFfiOpenzitiPlugin.shutdown();
+    expect(response, isNotNull);
   });
 }
