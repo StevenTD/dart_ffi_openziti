@@ -146,7 +146,9 @@ class ZitiSocket {
   Future<ZitiSocket> accept() async {
     final clientFd = _ziti.zitiAccept(_fd);
     print('Accept: $clientFd');
-    return ZitiSocket(ziti: _ziti, opts: _zitiOpts);
+    final zitiSocket = ZitiSocket(ziti: _ziti, opts: _zitiOpts);
+    print('Accept result: $zitiSocket');
+    return zitiSocket;
   }
 
   void close() {

@@ -149,21 +149,21 @@ void main() {
     print('Connect to service: $sock');
 
 // Connect to the Ziti service
-    sock.connect(['wttr.ziti', 80], jsonString);
+    //sock.connect(['wttr.ziti', 80], jsonString);
 
 // Bind the socket to a local address
-    await sock.bind(['0.0.0.0', 8089]);
+    //await sock.bind(['0.0.0.0', 8089]);
     // sock.listen();
 // Listen for connections on the socket
-    final client = await sock.accept();
-    print('Client connected: ${client.getsockname()}');
+    // final client = await sock.accept();
+    // print('Client connected: ${client.getsockname()}');
 
 // Now make the HTTP request (this works if the Ziti socket acts as an HTTP server)
 
     // // Start listening for incoming connections
-    sock.listen();
-    final response = await http.get(Uri.parse('http://localhost:8089'));
-    print(response.body);
+    // sock.listen();
+    // final response = await http.get(Uri.parse('http://localhost:8089'));
+    // print(response.body);
 
     // // Accept an incoming connection
     // final client = await sock.accept();
