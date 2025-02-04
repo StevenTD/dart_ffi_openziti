@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'dart_ffi_openziti_platform_interface.dart';
 import 'package:ffi/ffi.dart';
@@ -242,17 +245,21 @@ class DartFfiOpenziti {
 
   void zitiBind(int fd, Pointer<Void> ztx, String service,
       {String? terminator}) {
+    print('Start binding');
     final servicePtr = service.toNativeUtf8();
     final terminatorPtr =
         terminator != null ? terminator.toNativeUtf8() : nullptr;
     final result = ziti_bind(fd, ztx, servicePtr, terminatorPtr);
+    print('Binding result: $result');
     malloc.free(servicePtr);
     if (terminatorPtr != nullptr) malloc.free(terminatorPtr);
     checkError(result);
   }
 
   void zitiListen(int fd, int backlog) {
+    print('Listening 2 using socket: $fd and backlog: $backlog');
     final result = ziti_listen(fd, backlog);
+    print('Listen result: $result');
     checkError(result);
   }
 
@@ -300,6 +307,7 @@ class DartFfiOpenziti {
 
   int zitiConnectWrapper(int fd, Pointer<NativeType> ztx, String service,
       {String? terminator}) {
+    print('Ziti wrapper');
     final servicePtr = service.toNativeUtf8();
     final terminatorPtr =
         terminator != null ? terminator.toNativeUtf8() : nullptr;
